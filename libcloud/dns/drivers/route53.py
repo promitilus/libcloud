@@ -20,6 +20,7 @@ import hmac
 import datetime
 import uuid
 import copy
+
 from libcloud.utils.py3 import httplib
 
 from hashlib import sha1
@@ -113,6 +114,7 @@ class Route53DNSDriver(DNSDriver):
         RecordType.SPF: "SPF",
         RecordType.SRV: "SRV",
         RecordType.TXT: "TXT",
+        RecordType.CAA: "CAA",
     }
 
     def __init__(self, *args, **kwargs):
@@ -187,7 +189,7 @@ class Route53DNSDriver(DNSDriver):
         extra = extra or {}
         batch = [("CREATE", name, type, data, extra)]
         self._post_changeset(zone, batch)
-        id = ":".join((self.RECORD_TYPE_MAP[type], name))
+        id = ":".join((self.RECORD_TYPE_MAP.get(type, type), name))
         return Record(
             id=id,
             name=name,
@@ -221,7 +223,7 @@ class Route53DNSDriver(DNSDriver):
                 record=record, name=name, type=type, data=data, extra=extra
             )
 
-        id = ":".join((self.RECORD_TYPE_MAP[type], name))
+        id = ":".join((self.RECORD_TYPE_MAP.get(type, type), name))
         return Record(
             id=id,
             name=name,
@@ -261,7 +263,7 @@ class Route53DNSDriver(DNSDriver):
 
         rrs = ET.SubElement(change, "ResourceRecordSet")
         ET.SubElement(rrs, "Name").text = name + "." + zone.domain
-        ET.SubElement(rrs, "Type").text = self.RECORD_TYPE_MAP[type]
+        ET.SubElement(rrs, "Type").text = self.RECORD_TYPE_MAP.get(type, type)
         ET.SubElement(rrs, "TTL").text = str(extra.get("ttl", "0"))
 
         rrecs = ET.SubElement(rrs, "ResourceRecords")
@@ -278,7 +280,7 @@ class Route53DNSDriver(DNSDriver):
         self.connection.set_context({"zone_id": zone.id})
         self.connection.request(uri, method="POST", data=data)
 
-        id = ":".join((self.RECORD_TYPE_MAP[type], name))
+        id = ":".join((self.RECORD_TYPE_MAP.get(type, type), name))
 
         records = []
         for value in values:
@@ -344,7 +346,7 @@ class Route53DNSDriver(DNSDriver):
             record_name = record.zone.domain
 
         ET.SubElement(rrs, "Name").text = record_name
-        ET.SubElement(rrs, "Type").text = self.RECORD_TYPE_MAP[record.type]
+        ET.SubElement(rrs, "Type").text = self.RECORD_TYPE_MAP.get(record.type, record.type)
         ET.SubElement(rrs, "TTL").text = str(record.extra.get("ttl", "0"))
 
         rrecs = ET.SubElement(rrs, "ResourceRecords")
@@ -369,7 +371,7 @@ class Route53DNSDriver(DNSDriver):
             record_name = record.zone.domain
 
         ET.SubElement(rrs, "Name").text = record_name
-        ET.SubElement(rrs, "Type").text = self.RECORD_TYPE_MAP[type]
+        ET.SubElement(rrs, "Type").text = self.RECORD_TYPE_MAP.get(type, type)
         ET.SubElement(rrs, "TTL").text = str(extra.get("ttl", "0"))
 
         rrecs = ET.SubElement(rrs, "ResourceRecords")
@@ -405,7 +407,7 @@ class Route53DNSDriver(DNSDriver):
                 record_name = zone.domain
 
             ET.SubElement(rrs, "Name").text = record_name
-            ET.SubElement(rrs, "Type").text = self.RECORD_TYPE_MAP[type_]
+            ET.SubElement(rrs, "Type").text = self.RECORD_TYPE_MAP.get(type_, type_)
             ET.SubElement(rrs, "TTL").text = str(extra.get("ttl", "0"))
 
             rrecs = ET.SubElement(rrs, "ResourceRecords")
@@ -525,7 +527,7 @@ class Route53DNSDriver(DNSDriver):
             extra["weight"] = int(weight)
             extra["port"] = int(port)
 
-        id = ":".join((self.RECORD_TYPE_MAP[type], name))
+        id = ":".join((self.RECORD_TYPE_MAP.get(type, type), name))
         record = Record(
             id=id,
             name=name,
