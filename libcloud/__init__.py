@@ -20,8 +20,8 @@ libcloud provides a unified interface to the cloud computing resources.
 """
 
 import os
-import codecs
 import atexit
+import codecs
 
 from libcloud.base import DriverType  # NOQA
 from libcloud.base import DriverTypeFactoryMap  # NOQA
@@ -39,7 +39,7 @@ except ImportError:
 
 __all__ = ["__version__", "enable_debug"]
 
-__version__ = "3.6.1-dev"
+__version__ = "3.6.2-dev"
 
 
 def enable_debug(fo):
